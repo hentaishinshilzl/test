@@ -513,15 +513,100 @@ mr-jobhistory-daemon.sh start historyserver
 Monitoring Hadoop by `jps`. You should see NodeNode+RecourseManager running on Master Node
 and NodeManager+DataNode running on Slave Nodes.
 
-
+Stopping cluster
+```
+stop-dfs.sh
+stop-yarn.sh
+mr-jobhistory-daemon.sh stop historyserver
+```
 
 
 ---
 
 ### 4.Spark Installation
 
+#### 4.1.Download and Configure Spark on Master Node
+Download spark to /opt
+```
+cd /opt
+wget https://www.apache.org/dyn/closer.lua/spark/spark-2.2.1/spark-2.2.1-bin-hadoop2.7.tgz
+
+```
+Extract files
+
+`sudo tar xvf spark-2.2.1-bin-hadoop2.7.tgz`
+
+Change file permission
+
+`sudo chown -R hduser:hadoop ./spark-2.2.1-bin-hadoop2.7`
+
+**Configure Spark – spark-env.sh**
+
+Create the config file from the given template
+
+`cp /opt/spark-2.2.1-bin-hadoop2.7/conf/sparkenv.sh.template /opt/spark-2.2.1-binhadoop2.7/conf/spark-env.sh`
+
+Edit file
+
+`sudo vim /opt/spark-2.2.1-binhadoop2.7/conf/spark-env.sh`
+
+Adding the following lines (Depend on Hadoop)
+```
+HADOOP_CONF_DIR=$HADOOP_HOME/etc/hadoop
+LD_LIBRARY_PATH=/opt/hadoop-2.7.5/lib/native:$LD_LIBRARY_PATH
+```
+
+**Configure Spark – spark-defaults.conf**
+
+Create the config file from the given template
+
+`cp /opt/spark-2.2.1-bin-hadoop2.7/conf/sparkdefaults.conf.template /opt/spark-2.2.1-bin-hadoop2.7/conf/spark-defaults.conf`
+
+Edit file
+
+`sudo vim /opt/spark-2.2.1-binhadoop2.7/conf/spark-defaults.conf`
+
+Adding the following lines: **(Change "studentX" to your master node)**
+```
+spark.master spark://studentX:7077
+spark.serializer org.apache.spark.serializer.KryoSerializer
+spark.executor.instances 10
+spark.eventLog.enabled true
+spark.eventLog.dir hdfs://studentX:9000/tmp/sparkLog
+spark.history.fs.logDirectory hdfs://studentX:9000/tmp/sparkLog
+spark.yarn.archive hdfs://studentXX:9000/spark-archive.zip
+```
+Create folder for event log in HDFS
+
+`hdfs dfs -mkdir /tmp/sparkLog`
+
+#### 4.2.Copy Spark code to all other VMs
+
+Zip the folder (on master)
+```
+cd /opt
+tar cvf ~/spark-7305.tgz spark-2.2.1-bin-hadoop2.7
+```
+
+SSH to each slave nodes, and then copy the file through scp. Unzip the files then change file permission
+. **(Do this in each of
+the other VMs)**
+```
+sudo scp hduser@studentXX:spark-7305.tgz /opt
+cd /opt
+sudo tar xvf spark-7305.tgz
+sudo chown -R hduser:hadoop /opt/spark-2.2.1-bin-hadoop2.7
+```
+
+#### 4.3.Running Spark on Master Node
+
+`/opt/spark-2.2.1-bin-hadoop2.7/bin/spark-shell --master yarn`
+
+
 ---
 
 ### 5.Hive Installation
+
+
 
 ---
