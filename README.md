@@ -29,7 +29,7 @@ Type “Y” for confirmation if asked
  
 `sudo apt-get install vim`
 
-#### Configure GRUB to start Xen
+#### 1.1.Configure GRUB to start Xen
 
 `sudo vim /etc/default/grub`
 
@@ -43,7 +43,7 @@ Save changes and update.
 
 `sudo update-grub`
 
-#### Network configuration
+#### 1.2.Network configuration
 
 `sudo vim /etc/network/interfaces`
 
@@ -65,14 +65,16 @@ After reboot, check the network.
 `sudo xl list`
 You should see **Domain-0** is running
 
-#### Install Xen Utilities
+Enter`ifconfig` then remember **xenbr0's inet address** 
+
+#### 1.3.Install Xen Utilities
 
 `sudo apt-get install xen-utils-4.4 xenwatch xen-tools xen-utils-common
 xenstore-utils virtinst virt-viewer virt-manager`
 
 Type “Y” for confirmation
 
-#### Hypervisor Configuration
+#### 1.4.Hypervisor Configuration
 `sudo vim /etc/xen/xend-config.sxp`
 
 |Before  |         After         |
@@ -87,7 +89,7 @@ sudo ln -s /usr/lib/xen-4.4 /usr/lib/xen
 ---
 ### 2.VM Creation
 
-#### Set Default Virtual Machine Configuration
+#### 2.1.Set Default Virtual Machine Configuration
 `sudo vim /etc/xen-tools/xen-tools.conf`
 
 |Parameter  |         Value         |
@@ -97,12 +99,55 @@ sudo ln -s /usr/lib/xen-4.4 /usr/lib/xen
 |memory| 4096MB (for 16GB Memory Machine) / 2048MB (for 8GB Memory Machine) |
 |swap|8192MB|
 
-
-
+`sudo vim /etc/xen-tools/xen-tools.conf`
 
 |Parameter  |         Value         |
 |-------|:------------------------------:|
-|marked | markdown编译为html    |
-| ace   |        编辑器         |
-|||
+|gateway | **10.42.0.1**    |
+| netmask   |       **255.255.254.0**        |
+|broadcast | **10.42.0.255** |
+|dhcp|**1**|
+|nameserver|**10.42.0.1**|
+|bridge|**xenbr0**|
+|mirror|**http://hk.archive.ubuntu.com/ubuntu**|
+#### 2.2.Creating VMs
+`sudo xen-create-image --hostname=studentxx-x1`
+(**Replace _studentxx_ with your own host name**)
+
+Wait a while for the creation.
+
+When it finishes, remember the **Root Password** in the installtion Summary
+
+#### 2.3.Configure your VM
+`sudo vim /etc/xen/studentxx-x1.cfg`
+(**Replace _studentxx_ with your own host name**)
+
+|Parameter  |         Value         |
+|-------|:------------------------------:|
+|vif | ***The assigned MAC of your VM***  |
+
+#### 2.4.Start your VM
+
+`sudo xl create /etc/xen/studentxx-x1.cfg -c`
+
+(**Replace _studentxx_ with your own host name**)
+
+Enter your **Root Password** to login. Exit by using "Ctrl+]".
+
+#### 2.5.Connect to your VM
+`sudo xl console studentxx-x1`
+(**Replace _studentxx_ with your own host name**)
+
+Login as root with **Root Password** then change your password.
+
+`passwd`
+
+Add a user account “student” for your new VM and give it sudo right
+
+```
+adduser student
+sermod –a –G sudo student
+```
+
+ssh student@student83-x1
 
