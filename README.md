@@ -607,6 +607,42 @@ sudo chown -R hduser:hadoop /opt/spark-2.2.1-bin-hadoop2.7
 
 ### 5.Hive Installation
 
+Download Hive then extract.
 
+```
+sudo wget http://apache.01link.hk/hive/hive-2.3.3/apache-hive-2.3.3-bin.tar.gz
+tar zxvf apache-hive-2.3.3-bin.tar.gz
+```
+Copying files to /usr/local/hive directory
+
+```
+#sudo mv apache-hive-2.3.3-bin /usr/local/hive
+
+```
+Setting up environment for Hive
+appending the following lines to **~/.bashrc** file:
+```
+export HIVE_HOME=/usr/local/hive
+export PATH=$PATH:$HIVE_HOME/bin
+export CLASSPATH=$CLASSPATH:/usr/local/Hadoop/lib/*:.
+export CLASSPATH=$CLASSPATH:/usr/local/hive/lib/*:.
+```
+
+The following command is used to execute ~/.bashrc file.
+
+`source ~/.bashrc`
+
+**Configuring Hive**
+
+To configure Hive with Hadoop, you need to edit the hive-env.sh file, which is placed in the $HIVE_HOME/conf directory. The following commands redirect to Hive config folder and copy the template file:
+```
+cd $HIVE_HOME/conf
+cp hive-env.sh.template hive-env.sh
+```
+Edit the hive-env.sh file by appending the following line:
+
+`export HADOOP_HOME=/usr/local/hadoop`
+
+Hive installation is completed successfully. Now you require an external database server to configure Metastore. We use Apache Derby database.
 
 ---
