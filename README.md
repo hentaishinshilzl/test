@@ -154,7 +154,7 @@ Now you can use ssh to connect
 ### Repeat 2.2-2.5 to create studentxx-x2
 #### 2.6.Cluster environment
 
-Do it on all 4 computers of your group
+Do it on all 4 machines of your group
 
 Project Requirement:
 
@@ -166,7 +166,355 @@ Project Requirement:
 
 ### 3.Hadoop Installation
 
-#### 3.1.Cluster environment
+We will build a cluster on 4 machines, with 1 Master Node (on Dom0, RM + NN) + 8 Salve Nodes (on VMs, NM + DN)
+
+|VM  |         Role         |
+|-------|:------------------------------:|
+|Dom0 on leader machine | Master Node, NameNode+ResourceManager   |
+| All x1,x2   |       Slave Node, DataNode+NodeMageger         |
+
+#### 3.1.Pre-requisites
+ 
+• Disabling IPv6
+
+`sudo vim /etc/sysctl.conf`
+
+Adding at the end of the file: 
+```
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.lo.disable_ipv6 = 1
+```
+**Need to do this step on all vms.**
+Then reboot your machine.
+
+• Set up all VMs
+```
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install nano
+```
+• Install utilities: software-properties-common etc. **(on All VMs)**
+
+`sudo apt-get install software-properties-common python-software-properties`
+
+• Install Java on all VMs
+```
+sudo add-apt-repository ppa:webupd8team/java
+sudo apt-get update
+sudo apt-get install oracle-java8-installer
+```
+
+• Setup working environment on all VMs: e.g., JAVA_HOME variable set
+to the path where JDK is installed
+
+`sudo nano /etc/profile`
+
+Adding to the end of file:
+```
+export JAVA_HOME=/usr/lib/jvm/java-8-oracle
+export JRE_HOME=$JAVA_HOME/jre
+export CLASSPATH=$CLASSPATH:$JAVA_HOME/lib:$JAVA_HOME/jre/lib
+export PATH=$PATH:$JAVA_HOME/bin:$JAVA_HOME/jre/bin
+
+```
+
+• Create a Hadoop user “hduser”, and user group “hadoop” on all VMs
+```
+sudo addgroup hadoop
+sudo adduser --ingroup hadoop hduser    
+```
+• Grant root access on all VMs for “hduser” as all the steps should ideally be performed by root user
+
+`sudo usermod -a -G sudo hduser`
+
+• Configuring SSH (allow access remote VMs without
+password)
+
+**Do on Only the Master Node machine (Dom0)**
+
+Login as hduser.
+
+First, generate key pair
+`ssh-keygen -t rsa -P ""`
+
+Add key to **All** nodes
+```
+ssh-copy-id hduser@studentX(Dom0)
+ssh-copy-id hduser@studentX-x1
+ssh-copy-id hduser@studentX-x2
+ssh-copy-id hduser@studentY-x1
+ssh-copy-id hduser@studentY-x2
+ssh-copy-id hduser@studentZ-x1
+ssh-copy-id hduser@studentZ-x2
+ssh-copy-id hduser@studentN-x1
+ssh-copy-id hduser@studentN-x2
+```
+
+• Test SSH connection
+Try to connect to all slaves once
+```
+ssh studentX
+ssh studentX-x1
+ssh studentX-x2
+ssh studentY-x1
+ssh studentY-x2
+ssh studentZ-x1
+ssh studentZ-x2
+ssh studentN-x1
+ssh studentN-x2
+
+```
+Make sure you can connect to all the VMs
+without entering a password
+#### 3.2.Configure Hadoop on Matser Node
+##### 3.2.1. Download Hadoop
+
+We will install Hadoop at folder /opt
+
+`cd /opt`
+
+ Download hadoop-2.7.5. Extract the file, then change the owner of the extracted files
+
+```
+sudo wget https://archive.apache.org/dist/hadoop/core/hadoop-2.7.5/hadoop-2.7.5.tar.gz
+sudo tar zxvf hadoop-2.7.5.tar.gz
+sudo chown -R hduser:hadoop hadoop-2.7.5
+```
+####Remember all the Hadoop installation steps should be done under "hduser"
+##### 3.2.2. Setup environment
+**Modify hadoop-env.sh**
+
+`nano /opt/hadoop-2.7.5/etc/hadoop/hadoop-env.sh`
+
+Modify
+```
+# The java implementation to use.
+export JAVA_HOME=${JAVA_HOME}
+```
+
+to
+```
+# The java implementation to use.
+export JAVA_HOME=/usr/lib/jvm/java-8-oracle
+export HADOOP_HOME=/opt/hadoop-2.7.5
+export HADOOP_CONF_DIR=/opt/hadoop-2.7.5/etc/hadoop
+```
+
+**Modify core-site.xml**
+
+`nano /opt/hadoop-2.7.5/etc/hadoop/core-site.xml`
+
+Modify
+```
+<configuration>
+</configuration>
+```
+
+to **(Change "studentX" to your master node)**
+```
+<configuration>
+<property>
+<name>fs.defaultFS</name>
+<value>hdfs://studentX:9000</value>
+</property>
+<property>
+<name>hadoop.tmp.dir</name>
+<value>/var/hadoop/hadoop-${user.name}</value>
+</property>
+</configuration>
+```
+
+
+**Modify hdfs-site.xml**
+
+`nano /opt/hadoop-2.7.5/etc/hadoop/hdfs-site.xml`
+
+Modify
+```
+<configuration>
+</configuration>
+```
+
+to
+```
+<configuration>
+<property>
+<name>dfs.replication</name>
+<value>2</value>
+</property>
+<property>
+<name>dfs.blocksize</name>
+<value>64m</value>
+</property>
+</configuration>
+```
+**Modify mapred-site.xml**
+
+Create mapred-site.xml from template then edit it.
+```
+cp /opt/hadoop-2.7.5/etc/hadoop/mapred-site.xml.template /opt/hadoop-2.7.5/etc/hadoop/mapred-site.xml
+nano /opt/hadoop-2.7.5/etc/hadoop/mapred-site.xml
+```
+
+Modify
+```
+<configuration>
+</configuration>
+```
+
+to
+```
+<configuration>
+<property>
+<name>mapreduce.framework.name</name>
+<value>yarn</value>
+</property>
+<property>
+<name>mapreduce.map.memory.mb</name>
+<value>200</value>
+</property>
+<property>
+<name>mapreduce.reduce.memory.mb</name>
+<value>300</value>
+</property>
+</config
+```
+**Modify yarn-site.xml**
+
+`nano /opt/hadoop-2.7.5/etc/hadoop/yarn-site.xml`
+
+Modify
+```
+<configuration>
+</configuration>
+```
+
+to **(Change "studentX" to your master node)**
+```
+<configuration>
+<property>
+<name>yarn.resourcemanager.hostname</name>
+<value>studentX</value>
+</property>
+<property>
+<name>yarn.nodemanager.aux-services</name>
+<value>mapreduce_shuffle</value>
+</property>
+</configuration>
+```
+#### 3.3.Install Hadoop (Do it on Master Node)
+##### 3.3.1. Configure Master Node and Slave Nodes
+
+Master Node: `nano /opt/hadoop-2.7.5/etc/hadoop/masters`
+
+Modify to:
+
+`studentX`
+
+Slave Node: `nano /opt/hadoop-2.7.5/etc/hadoop/slaves`
+
+Modify to (Replace the content by the names of
+your VMs):
+```
+studentX-x1
+studentX-x2
+studentY-x1
+studentY-x2
+studentZ-x1
+studentZ-x2
+studentN-x1
+studentN-x2
+```
+**Zip the Hadoop folder**
+```
+cd /opt
+tar cvf ~/hadoop-7305.tar.gz hadoop-2.7.5
+```
+##### 3.3.2. Copy Hadoop package to all slave nodes
+
+SSH to one of the slave nodes
+
+`ssh studentX-x1`
+
+ Copy Hadoop configuration files from the master node
+
+`sudo scp hduser@studentX:hadoop-7305.tar.gz /opt`
+
+Unzip Hadoop
+```
+cd /opt
+sudo tar xvf hadoop-7305.tar.gz
+```
+Change owner
+
+`sudo chown -R hduser:hadoop /opt/hadoop-2.7.5`
+
+
+
+Setting up environment 
+**(Still inside the slave node!)**
+
+Edit /etc/profile
+
+`sudo nano /etc/profile`
+
+Add these at the end of the file:
+```
+export HADOOP_HOME=/opt/hadoop-2.7.5
+export CLASSPATH=$CLASSPATH:$HADOOP_HOME/lib
+export PATH=$PATH:$HADOOP_HOME/bin
+export PATH=$PATH:$HADOOP_HOME/sbin
+```
+Create working directory
+
+`sudo mkdir /var/hadoop`
+
+Change owner
+
+`sudo chown -R hduser:hadoop /var/hadoop`
+
+**Repeat 3.3.2 steps on all slave nodes**
+
+##### 3.3.3.Setting up environment for the master node
+
+Now back to the master node.
+
+**Edit /etc/profile in the same way as described in 3.3.2.**
+
+Enforce change
+
+`source /etc/profile`
+
+Create working directory
+
+`sudo mkdir /var/hadoop`
+
+Change owner
+
+`sudo chown -R hduser:hadoop /var/hadoop`
+
+#### 3.4.Start Hadoop (All steps in Master Node)
+
+Before starting the HDFS, we need to format the NameNode. Use the following command only on master node:
+
+`hdfs namenode -format`
+
+**Be careful !** If this command is executed again after
+Hadoop has been used, your data previously
+stored in HDFS will be gone (can not be found).
+
+Starting the cluster
+```
+start-dfs.sh
+start-yarn.sh
+mr-jobhistory-daemon.sh start historyserver
+```
+Monitoring Hadoop by `jps`. You should see NodeNode+RecourseManager running on Master Node
+and NodeManager+DataNode running on Slave Nodes.
+
+
+
 
 ---
 
