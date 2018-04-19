@@ -29,7 +29,7 @@ Type “Y” for confirmation if asked
  
 `sudo apt-get install vim`
 
-##### Configure GRUB to start Xen
+#### Configure GRUB to start Xen
 
 `sudo vim /etc/default/grub`
 
@@ -43,7 +43,7 @@ Save changes and update.
 
 `sudo update-grub`
 
-##### Network configuration
+#### Network configuration
 
 `sudo vim /etc/network/interfaces`
 
@@ -65,14 +65,14 @@ After reboot, check the network.
 `sudo xl list`
 You should see **Domain-0** is running
 
-##### Install Xen Utilities
+#### Install Xen Utilities
 
 `sudo apt-get install xen-utils-4.4 xenwatch xen-tools xen-utils-common
 xenstore-utils virtinst virt-viewer virt-manager`
 
 Type “Y” for confirmation
 
-##### Hypervisor Configuration
+#### Hypervisor Configuration
 `sudo vim /etc/xen/xend-config.sxp`
 
 |Before  |         After         |
@@ -87,7 +87,7 @@ sudo ln -s /usr/lib/xen-4.4 /usr/lib/xen
 ---
 ### 2.VM Creation
 
-##### Set Default Virtual Machine Configuration
+#### Set Default Virtual Machine Configuration
 `sudo vim /etc/xen-tools/xen-tools.conf`
 
 |Parameter  |         Value         |
