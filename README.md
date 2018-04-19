@@ -148,6 +148,32 @@ Add a user account “student” for your new VM and give it sudo right
 adduser student
 sermod –a –G sudo student
 ```
+Now you can use ssh to connect
+`ssh student@studentxx-x1`(**Replace _studentxx_ with your own host name**)
 
-ssh student@student83-x1
+### Repeat 2.2-2.5 to create studentxx-x2
+#### 2.6.Cluster environment
 
+Do it on all 4 computers of your group
+
+Project Requirement:
+
+• 2 VMs per physical machine (studentN-x1 + studentN-x2)
+
+• 8 VMs in total to form a Hadoop cluster
+
+---
+
+### 3.Hadoop Installation
+
+#### 3.1.Cluster environment
+
+---
+
+### 4.Spark Installation
+
+---
+
+### 5.Hive Installation
+
+---
